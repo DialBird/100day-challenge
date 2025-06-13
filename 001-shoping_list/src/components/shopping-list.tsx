@@ -32,7 +32,8 @@ interface ShoppingItem {
 export function ShoppingList() {
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [celebration, setCelebration] = useState<{ id: string; x: number; y: number } | null>(null);
 
   useEffect(() => {
     const savedItems = localStorage.getItem('shopping-list')
@@ -60,7 +61,20 @@ export function ShoppingList() {
     }
   };
 
-  const toggleItem = (id: string) => {
+  const toggleItem = (id: string, event?: React.MouseEvent) => {
+    const item = items.find(item => item.id === id);
+    if (item && !item.completed && event) {
+      // アイテムがチェックされる場合、クリック位置を記録
+      const rect = (event.target as HTMLElement).getBoundingClientRect();
+      setCelebration({
+        id,
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
+      // 3秒後にエフェクトをクリア
+      setTimeout(() => setCelebration(null), 3000);
+    }
+    
     setItems(items.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
@@ -100,6 +114,55 @@ export function ShoppingList() {
     }
   }
 
+  // Celebration Effect Component  
+  function CelebrationEffect({ x, y }: { x: number; y: number }) {
+    const petals = ['🌸', '🌺', '🌼', '🌻', '🌷', '💐', '✨', '🎉'];
+    
+    return (
+      <div
+        className="fixed pointer-events-none z-50"
+        style={{
+          left: x,
+          top: y,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        {Array.from({ length: 12 }).map((_, i) => {
+          const angle = (i * 30) * Math.PI / 180;
+          const radius = 120;
+          const x25 = Math.cos(angle) * radius * 0.25;
+          const y25 = Math.sin(angle) * radius * 0.25 - 20;
+          const x50 = Math.cos(angle) * radius * 0.5;
+          const y50 = Math.sin(angle) * radius * 0.5 + 10;
+          const x75 = Math.cos(angle) * radius * 0.75;
+          const y75 = Math.sin(angle) * radius * 0.75 + 40;
+          const x100 = Math.cos(angle) * radius;
+          const y100 = Math.sin(angle) * radius + 80;
+          
+          return (
+            <div
+              key={i}
+              className="absolute text-xl celebration-petal"
+              style={{
+                '--x-25': `${x25}px`,
+                '--y-25': `${y25}px`,
+                '--x-50': `${x50}px`,
+                '--y-50': `${y50}px`,
+                '--x-75': `${x75}px`,
+                '--y-75': `${y75}px`,
+                '--x-100': `${x100}px`,
+                '--y-100': `${y100}px`,
+                animationDelay: `${i * 0.1}s`,
+              } as React.CSSProperties & { [key: string]: string }}
+            >
+              {petals[i % petals.length]}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   // Sortable Item Component
   function SortableItem({ item }: { item: ShoppingItem }) {
     const {
@@ -135,7 +198,7 @@ export function ShoppingList() {
             <GripVertical className="w-4 h-4 text-gray-400" />
           </div>
           <button
-            onClick={() => toggleItem(item.id)}
+            onClick={(e) => toggleItem(item.id, e)}
             className={`w-6 h-6 rounded-full border-2 transition-colors duration-200 flex items-center justify-center ${
               item.completed
                 ? 'bg-green-500 border-green-500 hover:bg-green-600'
@@ -234,6 +297,11 @@ export function ShoppingList() {
               </div>
             </SortableContext>
           </DndContext>
+        )}
+
+        {/* Celebration Effect */}
+        {celebration && (
+          <CelebrationEffect x={celebration.x} y={celebration.y} />
         )}
 
         {/* All Completed Celebration */}

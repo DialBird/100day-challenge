@@ -118,3 +118,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 花吹雪アニメーション */
+@keyframes celebration {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  25% {
+    transform: translate(var(--x-25, 30px), var(--y-25, -20px)) rotate(90deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(var(--x-50, 60px), var(--y-50, 10px)) rotate(180deg) scale(1.2);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translate(var(--x-75, 90px), var(--y-75, 40px)) rotate(270deg) scale(0.8);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(var(--x-100, 120px), var(--y-100, 80px)) rotate(360deg) scale(0);
+    opacity: 0;
+  }
+}
+
+.celebration-petal {
+  animation: celebration 2.5s ease-out forwards;
+}
