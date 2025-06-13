@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { ShoppingCart, Plus, Trash2, Check } from 'lucide-react';
+import { ShoppingCart, Plus, Trash2, Check, GripVertical } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ShoppingItem {
   id: string;
@@ -61,6 +80,90 @@ export function ShoppingList() {
     }
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over?.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
+  // Sortable Item Component
+  function SortableItem({ item }: { item: ShoppingItem }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <Card
+        ref={setNodeRef}
+        style={style}
+        className={`p-4 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 ${
+          isDragging ? 'opacity-50 rotate-3 scale-105' : 'hover:scale-[1.02]'
+        } ${
+          item.completed ? 'bg-green-50/80 opacity-75' : 'bg-white/80'
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded transition-colors"
+          >
+            <GripVertical className="w-4 h-4 text-gray-400" />
+          </div>
+          <button
+            onClick={() => toggleItem(item.id)}
+            className={`w-6 h-6 rounded-full border-2 transition-colors duration-200 flex items-center justify-center ${
+              item.completed
+                ? 'bg-green-500 border-green-500 hover:bg-green-600'
+                : 'border-gray-300 hover:border-blue-400'
+            }`}
+          >
+            {item.completed && (
+              <Check className="w-4 h-4 text-white" />
+            )}
+          </button>
+          <span className={`flex-1 ${
+            item.completed ? 'text-gray-600 line-through' : 'text-gray-800'
+          }`}>
+            {item.name}
+          </span>
+          <Button
+            onClick={() => deleteItem(item.id)}
+            variant="ghost"
+            size="sm"
+            className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-2xl mx-auto">
@@ -91,7 +194,7 @@ export function ShoppingList() {
             <Input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyPress}
               placeholder="商品名を入力..."
               className="flex-1 border-gray-200 focus:border-blue-400 focus:ring-blue-400/20 rounded-xl h-12"
             />
@@ -118,61 +221,19 @@ export function ShoppingList() {
             </div>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {/* Incomplete Items */}
-            {items.filter(item => !item.completed).map(item => (
-              <Card
-                key={item.id}
-                className="p-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
-              >
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => toggleItem(item.id)}
-                    className="w-6 h-6 rounded-full border-2 border-gray-300 hover:border-blue-400 transition-colors duration-200 flex items-center justify-center"
-                  >
-                    {item.completed && (
-                      <Check className="w-4 h-4 text-green-500" />
-                    )}
-                  </button>
-                  <span className="flex-1 text-gray-800">{item.name}</span>
-                  <Button
-                    onClick={() => deleteItem(item.id)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-
-            {/* Completed Items */}
-            {items.filter(item => item.completed).map(item => (
-              <Card
-                key={item.id}
-                className="p-4 bg-green-50/80 backdrop-blur-sm border-0 shadow-lg opacity-75"
-              >
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => toggleItem(item.id)}
-                    className="w-6 h-6 rounded-full bg-green-500 border-2 border-green-500 hover:bg-green-600 transition-colors duration-200 flex items-center justify-center"
-                  >
-                    <Check className="w-4 h-4 text-white" />
-                  </button>
-                  <span className="flex-1 text-gray-600 line-through">{item.name}</span>
-                  <Button
-                    onClick={() => deleteItem(item.id)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg p-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
+                {items.map(item => (
+                  <SortableItem key={item.id} item={item} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* All Completed Celebration */}
