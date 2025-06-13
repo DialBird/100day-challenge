@@ -13,17 +13,21 @@ interface ShoppingItem {
 function App() {
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [inputValue, setInputValue] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
     const savedItems = localStorage.getItem('shopping-list')
     if (savedItems) {
       setItems(JSON.parse(savedItems))
     }
+    setIsInitialized(true)
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('shopping-list', JSON.stringify(items))
-  }, [items])
+    if (isInitialized) {
+      localStorage.setItem('shopping-list', JSON.stringify(items))
+    }
+  }, [items, isInitialized])
 
   const addItem = () => {
     if (inputValue.trim()) {
@@ -72,7 +76,7 @@ function App() {
                   placeholder="商品名を入力..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyPress}
                   className="flex-1"
                 />
                 <Button onClick={addItem} disabled={!inputValue.trim()}>
