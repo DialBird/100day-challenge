@@ -295,7 +295,7 @@ export default function TanStackFormDemo() {
                           <select
                             value={subField.state.value || "light"}
                             onChange={(e) => subField.handleChange(e.target.value as any)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                           >
                             {themeOptions.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -315,7 +315,7 @@ export default function TanStackFormDemo() {
                           <select
                             value={subField.state.value || "ja"}
                             onChange={(e) => subField.handleChange(e.target.value as any)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                           >
                             {languageOptions.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -378,7 +378,7 @@ export default function TanStackFormDemo() {
                             newValue[index] = { ...item, name: e.target.value };
                             field.handleChange(newValue as any);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                         />
                       </div>
                       <div className="space-y-2">
@@ -395,7 +395,7 @@ export default function TanStackFormDemo() {
                             newValue[index] = { ...item, level: Number(e.target.value) };
                             field.handleChange(newValue as any);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                         />
                       </div>
                       <div className="space-y-2">
@@ -411,7 +411,7 @@ export default function TanStackFormDemo() {
                             newValue[index] = { ...item, yearsOfExperience: Number(e.target.value) };
                             field.handleChange(newValue as any);
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                         />
                       </div>
                     </div>
