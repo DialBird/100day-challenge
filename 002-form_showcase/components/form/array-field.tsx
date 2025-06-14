@@ -42,7 +42,7 @@ export function ArrayField<TData, TName extends keyof TData, TItem>({
     defaultValue: [] as any,
   });
 
-  const items = (field.state.value as TItem[]) || [];
+  const items = Array.isArray(field.state.value) ? (field.state.value as TItem[]) : [];
 
   const addItem = () => {
     if (maxItems && items.length >= maxItems) return;

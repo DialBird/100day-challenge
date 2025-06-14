@@ -25,7 +25,6 @@ import {
   NestedFieldSubField,
   ConditionalField,
   conditions,
-  exampleSchemas,
   commonSchemas,
 } from "@/components/form";
 
@@ -284,7 +283,7 @@ export default function TanStackFormDemo() {
                   }}
                   collapsible={true}
                 >
-                  {(field, data) => (
+                  {() => (
                     <div className="space-y-4">
                       <NestedFieldSubField<DemoFormData, "preferences", DemoFormData["preferences"], "theme">
                         parentName="preferences"
@@ -374,7 +373,8 @@ export default function TanStackFormDemo() {
                           placeholder="JavaScript"
                           value={item.name}
                           onChange={(e) => {
-                            const newValue = [...(field.state.value || [])];
+                            const currentValue = Array.isArray(field.state.value) ? field.state.value : [];
+                            const newValue = [...currentValue];
                             newValue[index] = { ...item, name: e.target.value };
                             field.handleChange(newValue as any);
                           }}
@@ -391,7 +391,8 @@ export default function TanStackFormDemo() {
                           max="5"
                           value={item.level}
                           onChange={(e) => {
-                            const newValue = [...(field.state.value || [])];
+                            const currentValue = Array.isArray(field.state.value) ? field.state.value : [];
+                            const newValue = [...currentValue];
                             newValue[index] = { ...item, level: Number(e.target.value) };
                             field.handleChange(newValue as any);
                           }}
@@ -407,7 +408,8 @@ export default function TanStackFormDemo() {
                           min="0"
                           value={item.yearsOfExperience}
                           onChange={(e) => {
-                            const newValue = [...(field.state.value || [])];
+                            const currentValue = Array.isArray(field.state.value) ? field.state.value : [];
+                            const newValue = [...currentValue];
                             newValue[index] = { ...item, yearsOfExperience: Number(e.target.value) };
                             field.handleChange(newValue as any);
                           }}
