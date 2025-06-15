@@ -11,10 +11,15 @@ export interface Tweet {
   userId: string;
   userName: string;
   createdAt: Timestamp;
+  imageUrl?: string;
+  imageAlt?: string;
+  likes: string[]; // ユーザーIDの配列
+  likesCount: number;
 }
 
 export interface User {
   id: string;
   displayName: string;
   createdAt: Timestamp;
+  favorites: string[]; // お気に入りのツイートIDの配列
 }

@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newUser: Omit<User, 'id'> = {
         displayName,
         createdAt: serverTimestamp() as any,
+        favorites: [],
       };
 
       await setDoc(userRef, newUser);

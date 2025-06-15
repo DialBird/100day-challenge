@@ -6,6 +6,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 const firebaseConfig = {
   // TODO: Firebaseプロジェクトの設定を環境変数から取得
@@ -26,6 +27,9 @@ export const auth = getAuth(app);
 // Firestore の初期化
 export const db = getFirestore(app);
 
+// Storage の初期化
+export const storage = getStorage(app);
+
 // 開発環境でのエミュレータ接続
 if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
   try {
@@ -33,6 +37,8 @@ if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_FIREBA
     connectAuthEmulator(auth, 'http://localhost:9099');
     // Firestore エミュレータに接続
     connectFirestoreEmulator(db, 'localhost', 8080);
+    // Storage エミュレータに接続
+    connectStorageEmulator(storage, 'localhost', 9199);
   } catch (error) {
     // エミュレータがすでに接続されている場合のエラーは無視
     console.log('Firebase emulators already connected or not available');

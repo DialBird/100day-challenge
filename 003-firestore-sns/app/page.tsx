@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import TweetForm from '@/components/TweetForm';
 import TweetList from '@/components/TweetList';
+import { Star } from 'lucide-react';
 
 export default function Home() {
   const { user, userProfile, loading, logout } = useAuth();
@@ -62,6 +63,13 @@ export default function Home() {
               <span className="text-sm text-gray-600">
                 {userProfile.displayName}
               </span>
+              <button
+                onClick={() => router.push('/favorites')}
+                className="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-full transition-colors"
+                title="お気に入り"
+              >
+                <Star size={18} />
+              </button>
               <button
                 onClick={handleLogout}
                 className="text-sm text-red-600 hover:text-red-800 font-medium"

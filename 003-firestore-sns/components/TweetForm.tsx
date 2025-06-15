@@ -6,10 +6,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadImage } from '@/lib/imageUpload';
+import { Camera, X } from 'lucide-react';
 
 interface TweetFormProps {
   onTweetPosted?: () => void;
@@ -19,6 +21,33 @@ export default function TweetForm({ onTweetPosted }: TweetFormProps) {
   const { user, userProfile } = useAuth();
   const [text, setText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 画像選択処理
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setSelectedImage(file);
+
+    // プレビュー用のURLを作成
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 画像削除処理
+  const handleImageRemove = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +57,33 @@ export default function TweetForm({ onTweetPosted }: TweetFormProps) {
     setIsSubmitting(true);
     
     try {
-      await addDoc(collection(db, 'tweets'), {
+      let imageUrl: string | undefined;
+
+      // 画像がある場合はアップロード
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage, user.uid);
+      }
+
+      // ツイートデータを作成
+      const tweetData: any = {
         text: text.trim(),
         userId: user.uid,
         userName: userProfile.displayName,
         createdAt: serverTimestamp(),
-      });
+        likes: [],
+        likesCount: 0,
+      };
+
+      if (imageUrl) {
+        tweetData.imageUrl = imageUrl;
+        tweetData.imageAlt = `${userProfile.displayName}の投稿画像`;
+      }
+
+      await addDoc(collection(db, 'tweets'), tweetData);
       
+      // フォームをリセット
       setText('');
+      handleImageRemove();
       onTweetPosted?.();
     } catch (error) {
       console.error('Failed to post tweet:', error);
@@ -66,9 +114,50 @@ export default function TweetForm({ onTweetPosted }: TweetFormProps) {
           />
         </div>
         
+        {/* 画像プレビュー */}
+        {imagePreview && (
+          <div className="mb-4 relative">
+            <img
+              src={imagePreview}
+              alt="プレビュー"
+              className="max-w-full max-h-64 rounded-lg object-cover"
+            />
+            <button
+              type="button"
+              onClick={handleImageRemove}
+              className="absolute top-2 right-2 bg-gray-800 bg-opacity-70 text-white rounded-full p-1 hover:bg-opacity-90 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {text.length}/280
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-500">
+              {text.length}/280
+            </div>
+            
+            {/* 画像添付ボタン */}
+            <div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSubmitting}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="画像を添付"
+              >
+                <Camera size={20} />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
           
           <button

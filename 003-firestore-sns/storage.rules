@@ -1,0 +1,28 @@
+// Firebase Storage セキュリティルール
+// 画像アップロード機能に対応した設定
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ツイート画像
+    match /tweets/{userId}/{fileName} {
+      // 読み取り: 全ユーザーが可能
+      allow read: if true;
+      
+      // アップロード: 認証済みユーザーが自分のフォルダにのみ
+      allow write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidImageFile();
+      
+      // 削除: 認証済みユーザーが自分のファイルのみ
+      allow delete: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+
+    // 画像ファイルの検証
+    function isValidImageFile() {
+      return request.resource.size < 5 * 1024 * 1024  // 5MB以下
+        && request.resource.contentType.matches('image/.*'); // 画像ファイルのみ
+    }
+  }
+}

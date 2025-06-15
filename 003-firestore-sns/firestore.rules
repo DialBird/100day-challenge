@@ -1,0 +1,85 @@
+// Firestore セキュリティルール
+// いいね機能、お気に入り機能、画像添付機能に対応した設定
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ツイートコレクション
+    match /tweets/{tweetId} {
+      // 読み取り: 全ユーザーが可能
+      allow read: if true;
+      
+      // 作成: 認証済みユーザーのみ、適切なフィールドを含む場合のみ
+      allow create: if request.auth != null 
+        && request.auth.uid == resource.data.userId
+        && isValidTweetData(request.resource.data);
+      
+      // 更新: 認証済みユーザーがいいね操作をする場合のみ
+      allow update: if request.auth != null 
+        && isValidLikeUpdate(request.resource.data, resource.data);
+      
+      // 削除: 投稿者のみ可能
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+    }
+
+    // ユーザーコレクション
+    match /users/{userId} {
+      // 読み取り・書き込み: 本人のみ
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId;
+    }
+
+    // ツイートデータの検証
+    function isValidTweetData(data) {
+      return data.keys().hasAll(['text', 'userId', 'userName', 'createdAt', 'likes', 'likesCount'])
+        && data.text is string
+        && data.text.size() > 0
+        && data.text.size() <= 280
+        && data.userId is string
+        && data.userName is string
+        && data.likes is list
+        && data.likesCount is number
+        && data.likesCount >= 0
+        && (
+          // 画像がない場合
+          (!data.keys().hasAny(['imageUrl', 'imageAlt']))
+          ||
+          // 画像がある場合の検証
+          (data.imageUrl is string && data.imageUrl.size() > 0 && data.imageAlt is string)
+        );
+    }
+
+    // いいね更新の検証
+    function isValidLikeUpdate(newData, oldData) {
+      let likeDiff = newData.likesCount - oldData.likesCount;
+      let userId = request.auth.uid;
+      
+      return 
+        // 基本フィールドは変更されていない
+        newData.text == oldData.text
+        && newData.userId == oldData.userId
+        && newData.userName == oldData.userName
+        && newData.createdAt == oldData.createdAt
+        && (
+          (!oldData.keys().hasAny(['imageUrl'])) || (newData.imageUrl == oldData.imageUrl)
+        )
+        && (
+          (!oldData.keys().hasAny(['imageAlt'])) || (newData.imageAlt == oldData.imageAlt)
+        )
+        // いいね操作の検証
+        && (
+          // いいねを追加する場合
+          (likeDiff == 1 
+            && !oldData.likes.hasAny([userId]) 
+            && newData.likes.hasAny([userId]))
+          ||
+          // いいねを削除する場合
+          (likeDiff == -1 
+            && oldData.likes.hasAny([userId]) 
+            && !newData.likes.hasAny([userId]))
+        );
+    }
+  }
+}
